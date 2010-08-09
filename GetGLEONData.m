@@ -16,7 +16,8 @@ dbConn = database('vega','vegas','vegaselect','com.mysql.jdbc.Driver','jdbc:mysq
 
 % Check to make sure that we successfully connected
 if isconnection(dbConn)
-    QResult = get(fetch(exec(dbConn, ['SELECT * FROM `values` WHERE `ValueID` > ' num2str(lastValID) ' ORDER BY `ValueID` ASC' ])), 'Data');
+    QResult = get(fetch(exec(dbConn, ['SELECT * FROM `values` WHERE `ValueID` > ' ...
+        num2str(lastValID) ' ORDER BY `ValueID` ASC LIMIT 25' ])), 'Data');
     % disp(['Size of record set: ' num2str(size(QResult))]);
 % If the connection failed, print the error message
 else
