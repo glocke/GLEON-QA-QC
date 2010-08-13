@@ -35,7 +35,7 @@ for i2=size(Streams,1):-1:1
     clearvars -except YearFrac Removable Streams TS oldStreamDataArray newStreamDataArray
 end
 newYearFrac = YearFrac;
-newData = iddata(cell2mat(Removable),[],TS);
+newData = iddata(cell2mat(Removable),[],TS); 
 
 
 

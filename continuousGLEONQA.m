@@ -5,10 +5,10 @@ warning off MATLAB:javaclasspath:duplicateEntry;
 % config
 % I will set this the first time the program is run, and we start from
 % there.
-initValID = 47375; %IMPORTANT
+initValID = 152528252; %IMPORTANT
 currentValID = 0; % stores the last valueID cleaned
 
-if initValID == 47375 % remember need to change this, for first startup IMPORTANT
+if initValID == 152528252 % remember need to change this, for first startup IMPORTANT
     currentValID = initValID;
 end
 
@@ -19,7 +19,7 @@ Threshold = 0.75; % Required bins
 MinGapLength = 0.08; % Min year frac to be considered a gap
 TimeFormat = 2; % Year fraction
 Interactive = 0; % Graph data and use interactive interface
-PutResults = 0; % Store the results to the clean data db
+PutResults = 1; % Store the results to the clean data db
 
 Interpolate = 0; %
 Filter = 1; % 0=off, 1=wavelet, 2=MA,
@@ -33,42 +33,60 @@ TargetPeriod = 60; % minutes, for interpolation and filtering
 %[nStreams c] = size(Streams);
 %StreamID = input(['Choose a value (1-' num2str(nStreams) ') ']);
 
-ticmajor = tic; % time whole process
-records = 0; % and count total # records
-timeToWait = 15; % time before clean occurs again, in seconds
+mail = 'gleonqaqc@gmail.com';
+password = 'p@ss4GLEONQAQC';
+% Then this code will set up the preferences properly:
+setpref('Internet','E_mail',mail);
+setpref('Internet','SMTP_Server','smtp.gmail.com');
+setpref('Internet','SMTP_Username',mail);
+setpref('Internet','SMTP_Password',password);
+props = java.lang.System.getProperties;
+props.setProperty('mail.smtp.auth','true');
+props.setProperty('mail.smtp.socketFactory.class', 'javax.net.ssl.SSLSocketFactory');
+props.setProperty('mail.smtp.socketFactory.port','465');
+
+timeToWait = 30; % time before clean occurs again, in seconds
 moveOn = 1;
-% Contains metadata about a stream as follows:
-% Each row is a different stream.
-% Col1 = streamID, Col2 = VariableID, Col3 = UnitID, Col4 = Max, Col5 = Min
-streamDataArray = {};
 
 % iterate from here
 % ---------------------------------------
 while moveOn == 1
     ticminor = tic; % time this stream
     disp(':::::::::::::::::::::::::::::::::::');
+    disp(':: Initializing All Stream Data ');
+    % Contains metadata about a stream as follows:
+    % Each row is a different stream.
+    % Col1 = streamID, Col2 = VariableID, Col3 = UnitID, Col4 = Max, Col5 =
+    % Min
+    streamDataArray = InitialStreamDataArray();
     disp([':: Cleaning from ID ' num2str(currentValID)]);
-    
+
     D = {}; % our working copy of the data
     
     % get the data
     tryagain = 1;
-    %    while tryagain
-    %        try
-    [D.YearFrac D.Data D.QResult Removable TS Streams] = GetGLEONData(currentValID);
-    %            tryagain = 0;
-    %        catch exception
-    %           pause(60)
-    %           tryagain = 1;
-    %       end
-    %   end
+    while tryagain
+        emailCount = 1;
+        try
+            [D.YearFrac D.Data D.QResult Removable TS Streams] = GetGLEONData(currentValID);
+            tryagain = 0;
+        catch exception
+            disp(':: GetGLEONData is not working.');
+            pause(60)
+            tryagain = 1;
+            if emailCount == 60% if program is down for more than an hour, send email
+                sendmail(mail,'GLEON QA/QC is down', ...
+                    'GLEON QA/QC is not working properly, and not filtering data to Vega_1. Please advise.');
+            end
+            emailCount = emailCount + 1;
+        end
+    end
     
-    if size(D.QResult,1) > 20 % Needs at least 20 data points for TS to work
+    if size(D.QResult,1) > 0
         if strcmp(D.QResult, 'No Data')
             disp([':: No data from ID ' num2str(currentValID)]);
         else
-            records = records + size(D.Data.OutputData); % count the data
-            
+            disp([':: Cleaning ' num2str(size(D.QResult,1)) ' records']);
             % scope locally
             YearFrac = D.YearFrac;
             Data = D.Data;
@@ -84,16 +102,23 @@ while moveOn == 1
             % about a certain stream
             disp(': Running range checks...');
             tryagain = 1;
-            %while tryagain
-            %try
-            [ newYearFrac newData newStreamDataArray] = ...
-                RangeChecks(D.YearFrac, Removable, Streams, TS, streamDataArray);
-            %tryagain = 0;
-            %catch exception
-            % pause(60)
-            % tryagain = 1;
-            % end
-            %end
+            while tryagain
+                emailCount = 1;
+                try
+                    [ newYearFrac newData newStreamDataArray] = ...
+                        RangeChecks(D.YearFrac, Removable, Streams, TS, streamDataArray);
+                    tryagain = 0;
+                catch exception
+                    disp(':: Range checks are not working.');
+                    pause(60)
+                    tryagain = 1;
+                    if emailCount == 60% if program is down for more than an hour, send email
+                        sendmail(mail,'GLEON QA/QC is down', ...
+                            'GLEON QA/QC is not working properly, and not filtering data to Vega_1. Please advise.');
+                    end
+                    emailCount = emailCount + 1;
+                end
+            end
             streamDataArray = newStreamDataArray;
             YearFrac = newYearFrac;
             Data = newData;
@@ -168,12 +193,10 @@ while moveOn == 1
                 end
             end
             
-            disp([':: Records processed so far: ' num2str(records(1))]);
-            disp([':: Run time so far: ' num2str(toc(ticmajor))]);
             currentValID = D.QResult{size(D.QResult,1),1};
         end
     end
-    clearvars -except records ticmajor TimeFormat Interactive ...
+    clearvars -except records TimeFormat Interactive ...
         Threshold MinGapLength PutResults ...% WAVELET>IterationLimit...
         Interpolate Filter TargetPeriod timeToWait moveOn streamDataArray currentValID
     pause(timeToWait); % Wait, clean again.

@@ -5,11 +5,11 @@ function [ VariableID UnitID Max Min newStreamDataArray] = StreamData( StreamID,
 %   said metadata
 queryFlag = 1;
 for i=1:size(oldStreamDataArray, 1)
-    if oldStreamDataArray{i,1} == StreamID
-        VariableID = oldStreamDataArray{i,2};
-        UnitID = oldStreamDataArray{i,3};
-        Max = oldStreamDataArray{i,4};
-        Min = oldStreamDataArray{i,5};
+    if oldStreamDataArray(i,1) == StreamID
+        VariableID = oldStreamDataArray(i,2);
+        UnitID = oldStreamDataArray(i,3);
+        Max = oldStreamDataArray(i,4);
+        Min = oldStreamDataArray(i,5);
         newStreamDataArray = oldStreamDataArray;
         queryFlag = 0;
         break;
@@ -63,6 +63,7 @@ if queryFlag
     end
     % Close the connection so we don't run out of MySQL threads
     close(dbConn);
+    pause(0.5); % Don't hit SQL too hard
 end
 
 
