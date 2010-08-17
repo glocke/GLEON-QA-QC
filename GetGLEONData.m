@@ -41,7 +41,7 @@ if isconnection(dbConn)
                 Removable = QResult(:,2);
                 Streams = QResult(:,5);
             else % If the TS is 0 or less, sampling is irregular
-                limit = limit + 10;
+                limit = limit + 20;
                 pause(15);
             end
         else

@@ -5,17 +5,7 @@ warning off MATLAB:javaclasspath:duplicateEntry;
 % config
 % I will set this the first time the program is run, and we start from
 % there.
-% Set this to the path to your MySQL Connector/J JAR
-javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
-% Create the database connection object
-dbConn = database('vega_1','vegas','vegaselect','com.mysql.jdbc.Driver','jdbc:mysql://mysql.uwcfl.org/vega_1');
-if isconnection(dbConn)
-    initID = get(fetch(exec(dbConn, 'SELECT * FROM `values` ORDER BY ValueID DESC LIMIT 1')), 'Data');
-    currentValID = initID{1,1};
-else
-    currentValID = 152177192; % Something to give it, make it recent
-end
-close(dbConn);
+currentValID = GetInitialValueID();
 % Begin the QA
 %IterationLimit = 50 * span; % number of allowable iterations to remove
 %outliers before moving on WAVELET
@@ -23,7 +13,7 @@ Threshold = 0.75; % Required bins
 MinGapLength = 0.08; % Min year frac to be considered a gap
 TimeFormat = 2; % Year fraction
 Interactive = 0; % Graph data and use interactive interface
-PutResults = 1; % Store the results to the clean data db
+PutResults = 0; % Store the results to the clean data db
 
 Interpolate = 0; %
 Filter = 1; % 0=off, 1=wavelet, 2=MA,
