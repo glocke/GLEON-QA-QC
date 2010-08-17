@@ -5,13 +5,17 @@ warning off MATLAB:javaclasspath:duplicateEntry;
 % config
 % I will set this the first time the program is run, and we start from
 % there.
-initValID = 152528252; %IMPORTANT
-currentValID = 0; % stores the last valueID cleaned
-
-if initValID == 152528252 % remember need to change this, for first startup IMPORTANT
-    currentValID = initValID;
+% Set this to the path to your MySQL Connector/J JAR
+javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
+% Create the database connection object
+dbConn = database('vega_1','vegas','vegaselect','com.mysql.jdbc.Driver','jdbc:mysql://mysql.uwcfl.org/vega_1');
+if isconnection(dbConn)
+    initID = get(fetch(exec(dbConn, 'SELECT * FROM `values` ORDER BY ValueID DESC LIMIT 1')), 'Data');
+    currentValID = initID{1,1};
+else
+    currentValID = 152177192; % Something to give it, make it recent
 end
-
+close(dbConn);
 % Begin the QA
 %IterationLimit = 50 * span; % number of allowable iterations to remove
 %outliers before moving on WAVELET
@@ -182,13 +186,21 @@ while moveOn == 1
             % if we're storing the results to db...
             if PutResults
                 disp([': Putting cleaned data to database (' num2str(size(Final,1)) ' records)']);
+                tryagain = 1;
                 while tryagain
+                    emailCount = 1;
                     try
                         PutGLEONData(Final);
                         tryagain = 0;
                     catch exception
+                        disp(':: Putting data to Vega_1 is not working.');
                         pause(60)
                         tryagain = 1;
+                        if emailCount == 60% if program is down for more than an hour, send email
+                            sendmail(mail,'GLEON QA/QC is down', ...
+                                'GLEON QA/QC is not working properly, and not filtering data to Vega_1. Please advise.');
+                        end
+                        emailCount = emailCount + 1;
                     end
                 end
             end

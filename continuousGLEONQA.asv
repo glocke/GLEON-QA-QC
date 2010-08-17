@@ -5,13 +5,17 @@ warning off MATLAB:javaclasspath:duplicateEntry;
 % config
 % I will set this the first time the program is run, and we start from
 % there.
-initValID = 152528252; %IMPORTANT
-currentValID = 0; % stores the last valueID cleaned
-
-if initValID == 152528252 % remember need to change this, for first startup IMPORTANT
-    currentValID = initValID;
+% Set this to the path to your MySQL Connector/J JAR
+javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
+% Create the database connection object
+dbConn = database('vega_1','vegas','vegaselect','com.mysql.jdbc.Driver','jdbc:mysql://mysql.uwcfl.org/vega_1');
+if isconnection(dbConn)
+    initID = get(fetch(exec(dbConn, 'SELECT * FROM `values` ORDER BY ValueID DESC LIMIT 1')), 'Data');
+    currentValID = initID{1,1};
+else
+    currentValID = 152177192; % Something to give it, make it recent
 end
-
+close(dbConn);
 % Begin the QA
 %IterationLimit = 50 * span; % number of allowable iterations to remove
 %outliers before moving on WAVELET
@@ -19,7 +23,7 @@ Threshold = 0.75; % Required bins
 MinGapLength = 0.08; % Min year frac to be considered a gap
 TimeFormat = 2; % Year fraction
 Interactive = 0; % Graph data and use interactive interface
-PutResults = 0; % Store the results to the clean data db
+PutResults = 1; % Store the results to the clean data db
 
 Interpolate = 0; %
 Filter = 1; % 0=off, 1=wavelet, 2=MA,
@@ -32,6 +36,18 @@ TargetPeriod = 60; % minutes, for interpolation and filtering
 %Streams = GetGLEONStreams(SiteID);
 %[nStreams c] = size(Streams);
 %StreamID = input(['Choose a value (1-' num2str(nStreams) ') ']);
+
+mail = 'gleonqaqc@gmail.com';
+password = 'p@ss4GLEONQAQC';
+% Then this code will set up the preferences properly:
+setpref('Internet','E_mail',mail);
+setpref('Internet','SMTP_Server','smtp.gmail.com');
+setpref('Internet','SMTP_Username',mail);
+setpref('Internet','SMTP_Password',password);
+props = java.lang.System.getProperties;
+props.setProperty('mail.smtp.auth','true');
+props.setProperty('mail.smtp.socketFactory.class', 'javax.net.ssl.SSLSocketFactory');
+props.setProperty('mail.smtp.socketFactory.port','465');
 
 timeToWait = 30; % time before clean occurs again, in seconds
 moveOn = 1;
@@ -63,7 +79,7 @@ while moveOn == 1
             pause(60)
             tryagain = 1;
             if emailCount == 60% if program is down for more than an hour, send email
-                sendmail('support_cfl@mailplus.wisc.edu','GLEON QA/QC is down', ...
+                sendmail(mail,'GLEON QA/QC is down', ...
                     'GLEON QA/QC is not working properly, and not filtering data to Vega_1. Please advise.');
             end
             emailCount = emailCount + 1;
@@ -73,7 +89,8 @@ while moveOn == 1
     if size(D.QResult,1) > 0
         if strcmp(D.QResult, 'No Data')
             disp([':: No data from ID ' num2str(currentValID)]);
-        else            
+        else
+            disp([':: Cleaning ' num2str(size(D.QResult,1)) ' records']);
             % scope locally
             YearFrac = D.YearFrac;
             Data = D.Data;
@@ -100,7 +117,7 @@ while moveOn == 1
                     pause(60)
                     tryagain = 1;
                     if emailCount == 60% if program is down for more than an hour, send email
-                        sendmail('support_cfl@mailplus.wisc.edu','GLEON QA/QC is down', ...
+                        sendmail(mail,'GLEON QA/QC is down', ...
                             'GLEON QA/QC is not working properly, and not filtering data to Vega_1. Please advise.');
                     end
                     emailCount = emailCount + 1;
@@ -169,18 +186,25 @@ while moveOn == 1
             % if we're storing the results to db...
             if PutResults
                 disp([': Putting cleaned data to database (' num2str(size(Final,1)) ' records)']);
+                tryagain = 1;
                 while tryagain
+                    emailCount = 1;
                     try
                         PutGLEONData(Final);
                         tryagain = 0;
                     catch exception
+                        disp(':: Range checks are not working.');
                         pause(60)
                         tryagain = 1;
+                        if emailCount == 60% if program is down for more than an hour, send email
+                            sendmail(mail,'GLEON QA/QC is down', ...
+                                'GLEON QA/QC is not working properly, and not filtering data to Vega_1. Please advise.');
+                        end
+                        emailCount = emailCount + 1;
                     end
                 end
             end
             
-            disp([':: Records processed so far: ' num2str(records(1))]);
             currentValID = D.QResult{size(D.QResult,1),1};
         end
     end
