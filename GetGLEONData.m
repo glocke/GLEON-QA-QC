@@ -1,4 +1,4 @@
-function [YearFrac Result QResult Removable TS Streams] = GetGLEONData(lastValID)
+function [N QResult Removable Streams] = GetGLEONData(lastValID)
 
 % function to download data from Vega
 % returns a vector of year fractions and a data object
@@ -6,7 +6,7 @@ function [YearFrac Result QResult Removable TS Streams] = GetGLEONData(lastValID
 % format for StartDate and EndDate: '2008-1-1' or yyyy-mm-dd
 % char(39) = '
 % char(96) = `
-limit = 500;
+limit = 1000;
 % Set this to the path to your MySQL Connector/J JAR
 javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
 % javaaddpath('c:\program files\mysql-connector-java-3.1.14\mysql-connector-java-3.1.14-bin.jar');
@@ -17,51 +17,27 @@ dbConn = database('vega','vegas','vegaselect','com.mysql.jdbc.Driver','jdbc:mysq
 % Check to make sure that we successfully connected, and there are at least
 % 30 data points
 flag = 1;
-if isconnection(dbConn)
-    while flag == 1
-        QResult = get(fetch(exec(dbConn, ['SELECT * FROM `values` WHERE `ValueID` > ' ...
-            num2str(lastValID) ' ORDER BY `ValueID` ASC LIMIT ' num2str(limit)])), 'Data');
-        if ~strcmp(QResult, 'No Data')
-            % Get the year vector
-            %[Y, M, D, H, MN, S] = datevec(DateStr,'yyyy-mm-dd HH:MM:SS')
-            Y = datevec(QResult(:,3),'yyyy-mm-dd HH:MM:SS');
-            % Get the number vector
-            N = datenum(QResult(:,3),'yyyy-mm-dd HH:MM:SS');
-            % Get the difference between number vector and number from 31 December
-            % of the previous year (i.e., the current julian day)
-            %JDay = (N - datenum(Y(:,1)-1,12,31));
-            JDay = N - datenum(Y(:,1),0,0);
-            DaysInYear = (datenum(Y(:,1),12,31) - datenum(Y(:,1),0,0)) + 1; % Add a day because
-            % otherwise, e.g., noon on day 365 would be > 365
-            YearFrac = Y(:,1) + JDay ./ DaysInYear;
-            TS = mean(YearFrac(2:end)-YearFrac(1:end-1)) .* (60*60*24*mean(DaysInYear)); % approximate time step in seconds
-            if TS > 0
-                flag = 0;
-                Result = iddata(cell2mat(QResult(:,2)),[],TS);
-                Removable = QResult(:,2);
-                Streams = QResult(:,5);
-            else % If the TS is 0 or less, sampling is irregular
-                limit = limit + 20;
-                pause(15);
-            end
-        else
-            YearFrac = [];
-            Result = [];
-            Removable = [];
-            Streams = [];
-            TS = 0;
-            flag = 0;
-        end
-    end
-    % disp(['Size of record set: ' num2str(size(QResult))]);
-    % If the connection failed, print the error message
+if isconnection(dbConn)  
+    QResult = get(fetch(exec(dbConn, ['SELECT * FROM `values` WHERE `ValueID` > ' ...
+        num2str(lastValID) ' ORDER BY `ValueID` ASC LIMIT ' num2str(limit)])), 'Data');
+    if ~strcmp(QResult, 'No Data')
+        % Get the number vector
+        N = datenum(QResult(:,3),'yyyy-mm-dd HH:MM:SS');       
+        Removable = QResult(:,2);
+        Streams = QResult(:,5);       
+    else
+        N = [];
+        Removable = [];
+        Streams = [];     
+    end   
+% If the connection failed, print the error message
 else
     disp(sprintf('Connection failed: %s', dbConn.Message));
     YearFrac = [];
     Result = [];
 end
 % Close the connection so we don't run out of MySQL threads
-close(dbConn); 
+close(dbConn);
 
 
 

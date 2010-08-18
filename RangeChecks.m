@@ -1,9 +1,9 @@
-function [ newYearFrac newData newStreamDataArray] = RangeChecks( YearFrac, Removable, Streams, TS, oldStreamDataArray )
+function [ newQResult newStreamDataArray] = RangeChecks( QResult, oldStreamDataArray )
 %RANGECHECKS function to check acceptable ranges of data
 %   Uses the "ranges" table in Vega to make sure data is in between the 
 %   data listed. IMPORTANT, TEST ALL THESE PARTS INDIVIDUALLY
-for i2=size(Streams,1):-1:1
-    [VariableID UnitID Max Min newStreamDataArray] = StreamData(Streams{i2,1}, oldStreamDataArray);
+for i2=size(QResult(:,5),1):-1:1
+    [VariableID UnitID Max Min newStreamDataArray] = StreamData(QResult{i2,5}, oldStreamDataArray);
     if isnan(VariableID) || isnan(UnitID)
         % We do no comparisons if these don't exist, and just go to next
         % point.
@@ -22,20 +22,17 @@ for i2=size(Streams,1):-1:1
         
         if max ~= Inf || min ~= -Inf
             % remove data that is out of range
-            test = Removable{i2,1};
+            test = QResult{i2,2};
             % assuming Data(i) is a number
             if test > max || test < min
-                Removable(i2,:) = [];
-                YearFrac(i2,:) = [];
-                Streams(i2,:) = [];
+                QResult(i2,:) = [];
             end
         end
     end
     oldStreamDataArray = newStreamDataArray;
-    clearvars -except YearFrac Removable Streams TS oldStreamDataArray newStreamDataArray
+    clearvars -except QResult oldStreamDataArray newStreamDataArray
 end
-newYearFrac = YearFrac;
-newData = iddata(cell2mat(Removable),[],TS); 
+newQResult = QResult;
 
 
 
