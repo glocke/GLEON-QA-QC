@@ -28,3 +28,4 @@ else % If the connection failed, print the error message
 end
 % Close the connection so we don't run out of MySQL threads
 close(dbConn);
+clearvars -excpet QResult

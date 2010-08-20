@@ -65,5 +65,6 @@ if queryFlag
     close(dbConn);
     pause(0.5); % Don't hit SQL too hard
 end
+clearvars -except VariableID UnitID Max Min newStreamDataArray
 
 

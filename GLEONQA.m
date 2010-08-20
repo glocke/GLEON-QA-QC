@@ -3,15 +3,15 @@ clear all;
 warning off MATLAB:javaclasspath:duplicateEntry;
 
 % config
-StartDate = '1900-07-19'; EndDate = '2010-07-27'; % date range to clean... > 1yr for best results
+StartDate = '2007-01-01'; EndDate = '2008-01-01'; % date range to clean... > 1yr for best results
     s = strtok(StartDate, '-'); e = strtok(EndDate, '-');
     span = str2num(e) - str2num(s);
 IterationLimit = 50 * span; % number of allowable iterations to remove outliers before moving on
 Threshold = 0.75; % Required bins
 MinGapLength = 0.08; % Min year frac to be considered a gap
 TimeFormat = 2; % Year fraction
-Interactive = 0; % Graph data and use interactive interface
-PutResults = 1; % Store the results to the clean data db
+Interactive = 1; % Graph data and use interactive interface
+PutResults = 0; % Store the results to the clean data db
 
 Interpolate = 0; %
 Filter = 1; % 0=off, 1=wavelet, 2=MA,
@@ -45,7 +45,7 @@ for i1=1:nSites
     for i2=1:nStreams
         ticminor = tic; % time this stream
         Stream = Streams(i2,1);
-      if Stream{1} == 897 || flag == 1 % FOR TESTING
+      if Stream{1} == 15 % FOR TESTING
         flag = 1; % FOR TESTING
         disp(':::::::::::::::::::::::::::::::::::');
         disp([':: Cleaning stream ID ' num2str(Stream{1})]);
@@ -59,16 +59,33 @@ for i1=1:nSites
         end
         records = records + size(D.Data.OutputData); % count the data
 
+        N = datenum(D.QResult(:,3),'yyyy-mm-dd HH:MM:SS');
         % scope locally
         YearFrac = D.YearFrac;
         Data = D.Data;
 
         % Plot original data
-        if Interactive
-            figure(1); clf;
-            plot(YearFrac, Data);
-            title('Original Data');
+%         if Interactive
+%             figure(1); clf;
+%             plot(N, cell2mat(D.QResult(:,2)));
+%             title('Original Data');
+%         end
+        
+        % find gaps
+        % get valid indices & segmented data
+        [iValid YFs Ds] = FindGaps(YearFrac, Data, MinGapLength);
+        disp([': Segmented data into ' num2str(size(Ds, 2)) ' chunk(s)']);
+
+        % transform each segment & concat back onto single vector
+        TFData = {};
+        TFData.OutputData = [];
+        TFYearFrac = [];
+        for e=1:size(Ds,2)
+            [segYF segD] = TransformData(YFs{e}, Ds{e}, Interactive, e);
+            TFData.OutputData = [TFData.OutputData; segD.OutputData];
+            TFYearFrac = [TFYearFrac; segYF];
         end
+
         
         % run range checks
         disp(': Running range checks...');
@@ -117,20 +134,20 @@ for i1=1:nSites
         % display record count
         disp([': Time to process ' num2str(size(D.QResult, 1)) ' records: ' num2str(toc(ticminor)) ' seconds']);
         
-        % graph our clean data
-        if Interactive
-            figure(300); clf; hold on;
-            for i=1:size(CData,2)
-                plot(CYearFrac, CData.OutputData);
-                title('Cleaned data');
-            end
-            hold off;
-        end
+ 
 
         % finally, filter the original SQL result set against our clean
         % data
         Final = D.QResult(iValid, :);
         disp([': Removed ' num2str(size(D.QResult,1) - size(Final,1)) ' data points']);
+        
+               % graph our clean data
+        N = datenum(Final(:,3),'yyyy-mm-dd HH:MM:SS');
+%         if Interactive
+%             figure(300); clf;
+%             plot(N, cell2mat(Final(:,2)));
+%             title('Filtered Data');
+%         end
 
         % if we're storing the results to db...
         if PutResults

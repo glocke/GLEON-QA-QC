@@ -1,4 +1,4 @@
-function [YearFrac Result] = PutGLEONData(D)
+function [] = PutGLEONData(D)
 
 % Set this to the path to your MySQL Connector/J JAR
 javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
@@ -17,7 +17,7 @@ if isconnection(dbConn)
        if D.QResult{i,6} == 'null'
            D.QResult{i,6} = '';
        end
-        QResult = exec(dbConn, ['insert into `values` values (' ... 
+            exec(dbConn, ['insert into `values` values (' ... 
             '''' num2str(D.QResult{i,1}) ''',' ...
             '''' num2str(D.QResult{i,2}) ''',' ...
             '''' D.QResult{i,3} ''',' ...
@@ -28,8 +28,6 @@ if isconnection(dbConn)
     end
 else % If the connection failed, print the error message
     disp(sprintf('Connection failed: %s', dbConn.Message));
-    YearFrac = [];
-    Result = [];
 end
-
 close(dbConn);
+clearvars

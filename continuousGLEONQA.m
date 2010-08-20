@@ -15,16 +15,21 @@ disp(':: Initializing All Stream Data ');
 % Col1 = streamID, Col2 = VariableID, Col3 = UnitID, Col4 = Max, Col5 =
 % Min
 streamDataArray = InitialStreamDataArray();
+
 % iterate from here
 % ---------------------------------------
-while moveOn == 1
+while moveOn == 1 
     ticminor = tic; % time this stream
     disp([':: Cleaning from ID ' num2str(currentValID)]);
     
     D = {}; % our working copy of the data
     
     % get the data
-    [D.DateNum D.QResult D.Data D.Streams] = GetGLEONData(currentValID);
+    try 
+        [D.DateNum D.QResult D.Data D.Streams] = GetGLEONData(currentValID);
+    catch exception
+        break;
+    end
     
     if size(D.QResult,1) > 0
         if strcmp(D.QResult, 'No Data')
@@ -49,9 +54,10 @@ while moveOn == 1
                 disp([': Putting cleaned data to database (' num2str(size(D.QResult,1)) ' records)']);
                 PutGLEONData(D);
             end
+            currentValID = D.QResult{size(D.QResult,1),1};
         end
-        currentValID = D.QResult{size(D.QResult,1),1};
     end
     clearvars -except records PutResults timeToWait moveOn streamDataArray currentValID
     pause(timeToWait); % Wait, clean again.
 end
+continuousGLEONQA.m;

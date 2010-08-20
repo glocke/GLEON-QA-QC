@@ -38,7 +38,7 @@ else
 end
 % Close the connection so we don't run out of MySQL threads
 close(dbConn);
-
+clearvars -except N QResult Removable Streams
 
 
 
