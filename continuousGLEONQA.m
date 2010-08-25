@@ -60,4 +60,3 @@ while moveOn == 1
     clearvars -except records PutResults timeToWait moveOn streamDataArray currentValID
     pause(timeToWait); % Wait, clean again.
 end
-continuousGLEONQA.m;

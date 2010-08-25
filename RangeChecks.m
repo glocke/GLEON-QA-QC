@@ -4,7 +4,7 @@ function [ newQResult newStreamDataArray] = RangeChecks( QResult, oldStreamDataA
 %   data listed. IMPORTANT, TEST ALL THESE PARTS INDIVIDUALLY
 for i2=size(QResult(:,5),1):-1:1
     [VariableID UnitID Max Min newStreamDataArray] = StreamData(QResult{i2,5}, oldStreamDataArray);
-    if isnan(VariableID) || isnan(UnitID)
+    if strcmp(VariableID, 'NULL') || strcmp(UnitID, 'NULL')
         % We do no comparisons if these don't exist, and just go to next
         % point.
     else

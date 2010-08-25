@@ -18,7 +18,7 @@ end
 
 if queryFlag
     % Set this to the path to your MySQL Connector/J JAR
-    javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
+    %javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
     % javaaddpath('c:\program files\mysql-connector-java-3.1.14\mysql-connector-java-3.1.14-bin.jar');
 
     % Create the database connection object
@@ -31,9 +31,7 @@ if queryFlag
         cellunit = get(fetch(exec(dbConn, ['select `UnitID` from `streams` where `StreamID` = ' num2str(StreamID)])), 'Data');
         % Check to make sure unit id and variable id exist in db, if not,
         % no changes are made
-        check = get(fetch(exec(dbConn, ['select `UnitID` from `ranges` where `VariableID` = ' num2str(cellvar{1,1}) ...
-                ' and UnitID = ' num2str(cellunit{1,1})])), 'Data');
-        if strcmp(check, 'No Data')
+        if strcmp(cellvar, 'No Data') || strcmp(cellunit, 'No Data')
             disp(sprintf('UnitID or VariableID is not in database'));
             VariableID = 'NULL';
             UnitID = 'NULL';
@@ -63,7 +61,6 @@ if queryFlag
     end
     % Close the connection so we don't run out of MySQL threads
     close(dbConn);
-    pause(0.5); % Don't hit SQL too hard
 end
 clearvars -except VariableID UnitID Max Min newStreamDataArray
 

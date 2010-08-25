@@ -8,7 +8,7 @@ function [N QResult Removable Streams] = GetGLEONData(lastValID)
 % char(96) = `
 limit = 1000;
 % Set this to the path to your MySQL Connector/J JAR
-javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
+%javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
 % javaaddpath('c:\program files\mysql-connector-java-3.1.14\mysql-connector-java-3.1.14-bin.jar');
 
 % Create the database connection object
