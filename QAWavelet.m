@@ -8,6 +8,12 @@ function [iBad iGood] = QAWavelet(currValIDTail,Threshold)
 % Threshold is acceptable proportion of histogram bins full. Guidelines: 
 %   0.15 for water temperature
 %   0.30 for noisier data, such as wind speed
+GraphIt = 1;
+% BELOW STUFF IS FOR TESTING ONLY, TEMPORARY
+TimeFrac = [];
+for i=1:10000
+    TimeFrac = [TimeFrac;2000];
+end
 
 head = currValIDTail(1,1);
 half1 = currValIDTail(head+1:size(currValIDTail,1));
@@ -39,7 +45,7 @@ PropN = length(find(N>0)) ./ Bins;
 
 iAll = 1:length(C);
 % With large discontinuities, most bins will be empty
-if PropN >= Threshold | PropN==0 | isempty(X)
+if PropN >= Threshold || PropN==0 || isempty(X)
     iBad = []; % No outliers detected, so do nothing
     iGood = iAll;
 else % Get rid of the bad ones
@@ -72,6 +78,7 @@ if GraphIt
     
     input('press any key...');
 end
+clearvars -except iBad iGood
 
 
 

@@ -14,9 +14,15 @@ flag = 0;
 % Create the database connection object
 dbConn = database('vega_1','vegas','vegaselect','com.mysql.jdbc.Driver','jdbc:mysql://mysql.uwcfl.org/vega_1');
 if isconnection(dbConn)
-    QResult = get(fetch(exec(dbConn, ['SELECT * FROM `values` WHERE' ...
+    QResult = get(fetch(exec(dbConn, ['SELECT * FROM `values` WHERE ' ...
         'ValueID = ' num2str(currValID)])), 'Data');
-    streamID = QResult(1,5);
+    if strcmp(QResult, 'No Data')
+        currValIDTail = [];
+        streamID = -1;
+    else
+        streamIDcell = QResult(1,5);
+        streamID = streamIDcell{1,1};
+    end
     close(dbConn);
 else
     currValIDTail = [];
@@ -31,7 +37,8 @@ if streamID > -1
             if size(temp,1) < tail+2 % tail+2 is to account for the first two indexes of tail
                 % this means that the particular data point needs to be added to end
                 % of tail, and head index should be updated
-                value = QResult(1,2);
+                valuecell = QResult(1,2);
+                value = valuecell{1,1};
                 temp = [temp;value];
                 temp(1,1) = size(temp,1);
                 currValIDTail = temp;
@@ -40,7 +47,8 @@ if streamID > -1
                 % this means that this particular data point has all the
                 % data points it needs, and just needs to be added to ring
                 % buffer
-                value = QResult(1,2);
+                valuecell = QResult(1,2);
+                value = valuecell{1,1};
                 head = temp(1,1);
                 if head == tail+2
                     head = 3; % wrap head around to 3
@@ -59,10 +67,12 @@ if streamID > -1
         % need to create one
         temp(1,1) = 3; % initial head location should be 3
         temp(2,1) = streamID; % streamID is set
-        value = QResult(1,2);
+        valuecell = QResult(1,2);
+        value = valuecell{1,1};
         temp(3,1) = value; % initial value is set
         currValIDTail = temp;
         history{size(history,1)+1,1} = temp;
     end
 end
+clearvars -except currValIDTail history
                 
