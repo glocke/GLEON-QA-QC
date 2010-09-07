@@ -45,7 +45,7 @@ PropN = length(find(N>0)) ./ Bins;
 
 iAll = 1:length(C);
 % With large discontinuities, most bins will be empty
-if PropN >= Threshold || PropN==0 || isempty(X)
+if PropN >= Threshold | PropN==0 | isempty(X)
     iBad = []; % No outliers detected, so do nothing
     iGood = iAll;
 else % Get rid of the bad ones

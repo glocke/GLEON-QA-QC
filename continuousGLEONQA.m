@@ -44,14 +44,14 @@ while moveOn == 1
                 RangeChecks(D.QResult, streamDataArray);
             disp([': Removed ' num2str(size(D.QResult,1) - size(newQResult,1)) ' data points']);
             streamDataArray = newStreamDataArray;
-            D.QResult = newQResult;
+            D.newQResult = newQResult;
             
             % display record count
             disp([': Time to process ' num2str(size(D.QResult, 1)) ' records: ' num2str(toc(ticminor)) ' seconds']);
             
             % if we're storing the results to db...
             if PutResults
-                disp([': Putting cleaned data to database (' num2str(size(D.QResult,1)) ' records)']);
+                disp([': Putting cleaned data to database (' num2str(size(D.newQResult,1)) ' records)']);
                 PutGLEONData(D);
             end
             currentValID = D.QResult{size(D.QResult,1),1};

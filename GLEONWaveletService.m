@@ -8,6 +8,7 @@ tail = 7500; % How much history each stream will carry
 currValID = -1; % The current valueID to construct a wavelet from, possibly need to deal with crashes here...
 moveOn = 1; % loop variable
 Threshold = 0.15; % CHANGE THIS TO WHATEVER WORKS BEST
+PutResults = 0; % If we're putting data to a db
 % Set this to the path to your MySQL Connector/J JAR
 javaaddpath('mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar');
 
@@ -18,6 +19,11 @@ while moveOn
     if size(currValIDTail,1) == tail+2 % tail+2 is because of unique tail characteristics, explained in getHistory
         disp([':: Contsructing Wavelet for ValueID: ' num2str(currvalID)]);
         [iBad iGood] = QAWavelet(currValIDTail,Threshold);
+        if size(iBad) > 0
+            if PutResults
+                PutWaveletData(iGood);
+            end
+        end
     end
     currValID = currValID + 1;
     clearvars -except history tail currValID moveOn Threshold
